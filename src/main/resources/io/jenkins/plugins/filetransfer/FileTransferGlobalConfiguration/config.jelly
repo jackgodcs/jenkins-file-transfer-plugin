@@ -1,0 +1,22 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+  <f:section title="${%File transfer}">
+    <f:entry title="${%Storage root}" field="storageRoot"><f:textbox /></f:entry>
+    <f:entry title="${%Default maximum bytes}" field="defaultMaxBytes"><f:number min="1" /></f:entry>
+    <f:entry title="${%Hard maximum bytes}" field="hardMaxBytes"><f:number min="1" /></f:entry>
+    <f:entry title="${%Default build maximum bytes}" field="defaultBuildMaxBytes"><f:number min="1" /></f:entry>
+    <f:entry title="${%Default maximum files}" field="defaultMaxFiles"><f:number min="1" /></f:entry>
+    <f:entry title="${%Hard maximum files}" field="hardMaxFiles"><f:number min="1" /></f:entry>
+    <f:entry title="${%Maximum path depth}" field="maxDepth"><f:number min="1" /></f:entry>
+    <f:entry title="${%Concurrent uploads}" field="maxConcurrentUploads"><f:number min="1" /></f:entry>
+    <f:entry title="${%Concurrent uploads per user}" field="maxConcurrentUploadsPerUser"><f:number min="1" /></f:entry>
+    <f:entry title="${%Incomplete expiry minutes}" field="incompleteExpiryMinutes"><f:number min="1" /></f:entry>
+    <f:entry title="${%Completed expiry minutes}" field="completedExpiryMinutes"><f:number min="1" /></f:entry>
+    <f:entry title="${%Minimum free bytes}" field="minimumFreeBytes"><f:number min="0" /></f:entry>
+    <f:entry title="${%Minimum free percent}" field="minimumFreePercent"><f:number min="0" max="100" /></f:entry>
+    <f:entry title="${%Denied extensions}" field="deniedExtensions"><f:textbox /></f:entry>
+    <f:entry title="${%Successful build input retention days}" field="successRetentionDays"><f:number min="0" /></f:entry>
+    <f:entry title="${%Failed build input retention days}" field="failureRetentionDays"><f:number min="0" /></f:entry>
+    <f:entry title="${%Maximum input retention days}" field="maximumRetentionDays"><f:number min="0" /></f:entry>
+  </f:section>
+</j:jelly>

@@ -1,0 +1,22 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
+  <l:layout title="${%Downloadable results}">
+    <l:main-panel>
+      <h1>${%Downloadable results}</h1>
+      <j:if test="${it.run.result != null &amp;&amp; it.run.result.toString() != 'SUCCESS'}"><div class="warning">${%This build did not complete successfully. Verify results before use.}</div></j:if>
+      <ul>
+        <j:forEach var="result" items="${it.results}">
+          <li><strong>${result.name}</strong>
+            <j:choose>
+              <j:when test="${result.directory}"><a class="jenkins-button" href="${rootURL}/${it.run.url}artifact/${result.artifactPath}*zip*/${result.name}.zip">${%Download ZIP}</a></j:when>
+              <j:otherwise><a class="jenkins-button" href="${rootURL}/${it.run.url}artifact/${result.artifactPath}">${%Download file}</a></j:otherwise>
+            </j:choose>
+            <j:if test="${result.directory}">
+              <ul><j:forEach var="file" items="${result.files}"><li><a href="${rootURL}/${it.run.url}artifact/${result.artifactPath}${file}">${file}</a></li></j:forEach></ul>
+            </j:if>
+          </li>
+        </j:forEach>
+      </ul>
+    </l:main-panel>
+  </l:layout>
+</j:jelly>
