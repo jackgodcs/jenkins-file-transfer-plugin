@@ -1,0 +1,142 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version, for example 0.2.0 or 0.2.0-rc.1
+        required: true
+        type: string
+      ref:
+        description: Branch, commit, or tag to release
+        required: true
+        default: main
+        type: string
+      prerelease:
+        description: Mark the GitHub release as a prerelease
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Verify and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Validate release version
+        id: version
+        shell: bash
+        env:
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$REQUESTED_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release version: $REQUESTED_VERSION" >&2
+            exit 1
+          fi
+          POM_VERSION=$(python - <<'PY'
+          import xml.etree.ElementTree as ET
+          root = ET.parse('pom.xml').getroot()
+          namespace = {'m': 'http://maven.apache.org/POM/4.0.0'}
+          print(root.find('m:version', namespace).text)
+          PY
+          )
+          if [[ "$POM_VERSION" != "$REQUESTED_VERSION" ]]; then
+            echo "pom.xml version $POM_VERSION does not match requested version $REQUESTED_VERSION" >&2
+            exit 1
+          fi
+          echo "version=$REQUESTED_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify plugin
+        run: mvn --batch-mode --no-transfer-progress verify
+
+      - name: Create tag for a manual release
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          TAG: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
+            TAG_COMMIT=$(git rev-list -n 1 "$TAG")
+            if [[ "$TAG_COMMIT" != "$CURRENT_COMMIT" ]]; then
+              echo "Tag $TAG already points to $TAG_COMMIT instead of $CURRENT_COMMIT" >&2
+              exit 1
+            fi
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag --annotate "$TAG" --message "Release $TAG"
+            git push origin "refs/tags/$TAG"
+          fi
+
+      - name: Prepare release notes
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          SHA256=$(sha256sum target/file-transfer.hpi | cut -d ' ' -f 1)
+          SOURCE_COMMIT=$(git rev-parse HEAD)
+          {
+            echo "Jenkins File Transfer Plugin $VERSION"
+            echo
+            echo "Install file-transfer.hpi from Manage Jenkins → Plugins → Advanced settings → Deploy Plugin."
+            echo
+            echo "- Jenkins: 2.440.2 LTS or newer"
+            echo "- SHA-256: \`$SHA256\`"
+            echo "- Source commit: \`$SOURCE_COMMIT\`"
+          } > release-notes.md
+
+      - name: Publish GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.version }}
+          PRERELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || contains(steps.version.outputs.version, '-') }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" target/file-transfer.hpi --clobber
+            exit 0
+          fi
+          OPTIONS=(
+            "$TAG"
+            target/file-transfer.hpi
+            --verify-tag
+            --title "File Transfer Plugin $TAG"
+            --notes-file release-notes.md
+          )
+          if [[ "$PRERELEASE" == "true" ]]; then
+            OPTIONS+=(--prerelease)
+          else
+            OPTIONS+=(--latest)
+          fi
+          gh release create "${OPTIONS[@]}"
