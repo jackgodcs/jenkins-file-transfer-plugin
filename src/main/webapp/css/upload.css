@@ -1,3 +1,5 @@
 .file-transfer-upload { display: grid; gap: .5rem; }
 .file-transfer-upload progress { width: min(36rem, 100%); }
 .file-transfer-summary { color: var(--text-color-secondary, #666); }
+.file-transfer-progress-text { color: var(--text-color-secondary, #666); }
+.file-transfer-files { max-height: 12rem; margin: 0; overflow: auto; padding-left: 1.5rem; }

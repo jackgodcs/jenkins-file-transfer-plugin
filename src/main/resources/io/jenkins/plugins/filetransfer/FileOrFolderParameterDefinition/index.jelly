@@ -1,7 +1,7 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
   <f:entry title="${it.name}" description="${it.description}">
-    <div class="file-transfer-upload" data-parameter="${it.name}" data-required="${it.required}" data-max-bytes="${it.maxBytes}" data-max-files="${it.maxFiles}" data-message-limit="${%Selection exceeds the configured limit}" data-message-cancelled="${%Upload cancelled}" data-message-complete="${%Upload complete}" data-message-summary="${%Selection summary}">
+    <div class="file-transfer-upload" data-parameter="${it.name}" data-required="${it.required}" data-max-bytes="${it.maxBytes}" data-max-files="${it.maxFiles}" data-message-limit="${%Selection exceeds the configured limit}" data-message-cancelled="${%Upload cancelled}" data-message-complete="${%Upload complete}" data-message-summary="${%Selection summary}" data-message-bytes="${%bytes}" data-message-failed="${%Upload failed}">
       <input type="hidden" name="value" class="file-transfer-token" />
       <input type="file" class="file-transfer-file" style="display:none" />
       <input type="file" class="file-transfer-folder" webkitdirectory="webkitdirectory" directory="directory" style="display:none" />
@@ -9,7 +9,9 @@
       <button type="button" class="jenkins-button file-transfer-folder-button">${%Select folder}</button>
       <button type="button" class="jenkins-button file-transfer-cancel" hidden="hidden">${%Cancel}</button>
       <div class="file-transfer-summary">${%No file selected}</div>
+      <ul class="file-transfer-files" hidden="hidden"></ul>
       <progress class="file-transfer-progress" max="100" value="0" hidden="hidden"></progress>
+      <div class="file-transfer-progress-text" hidden="hidden"></div>
     </div>
     <link rel="stylesheet" href="${rootURL}/plugin/file-transfer/css/upload.css"/>
     <script src="${rootURL}/plugin/file-transfer/js/upload.js"></script>

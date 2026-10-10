@@ -1,11 +1,11 @@
 package io.jenkins.plugins.filetransfer;
 
 import hudson.Extension;
-import hudson.model.Action;
 import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParametersDefinitionProperty;
+import hudson.model.RootAction;
 import java.io.IOException;
 import java.util.Collections;
 import jenkins.model.Jenkins;
@@ -16,7 +16,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @Extension
-public class FileTransferAction implements Action {
+public class FileTransferAction implements RootAction {
     @Override
     public String getIconFileName() {
         return null;
