@@ -11,12 +11,19 @@
 
   <groupId>io.jenkins.plugins</groupId>
   <artifactId>file-transfer</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.1.0</version>
   <packaging>hpi</packaging>
 
   <name>File Transfer</name>
   <description>Reusable file and folder upload parameters and downloadable Pipeline results.</description>
-  <url>https://plugins.jenkins.io/file-transfer/</url>
+  <url>https://github.com/jackgodcs/jenkins-file-transfer-plugin</url>
+
+  <scm>
+    <connection>scm:git:https://github.com/jackgodcs/jenkins-file-transfer-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jackgodcs/jenkins-file-transfer-plugin.git</developerConnection>
+    <tag>0.1.0</tag>
+    <url>https://github.com/jackgodcs/jenkins-file-transfer-plugin</url>
+  </scm>
 
   <properties>
     <jenkins.version>2.440.2</jenkins.version>

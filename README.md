@@ -75,6 +75,6 @@ The administrator may also configure a comma-separated extension denylist. Param
 
 ## Install
 
-Run `mvn verify`, then upload `target/file-transfer.hpi` from **Manage Jenkins → Plugins → Advanced settings → Deploy Plugin** and restart Jenkins when requested. Configure the job through Pipeline syntax; ordinary users do not configure the control for each build.
+Download `file-transfer.hpi` from the [latest release](https://github.com/jackgodcs/jenkins-file-transfer-plugin/releases/latest), then upload it from **Manage Jenkins → Plugins → Advanced settings → Deploy Plugin** and restart Jenkins when requested. To build from source, run `mvn verify` and use `target/file-transfer.hpi`. Configure the job through Pipeline syntax; ordinary users do not configure the control for each build.
 
 See [docs/spec.md](docs/spec.md) for the agreed behavior, limits, lifecycle, and non-goals.
