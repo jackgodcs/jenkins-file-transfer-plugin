@@ -37,12 +37,12 @@
 
     control.querySelector('.file-transfer-file-button').onclick = function () { fileInput.click(); };
     control.querySelector('.file-transfer-folder-button').onclick = function () { folderInput.click(); };
-    cancel.onclick = function () { cancelled = true; tokenInput.value = ''; summary.textContent = control.dataset.messageCancelled; progress.hidden = true; progressText.hidden = true; cancel.hidden = true; };
+    cancel.onclick = function () { cancelled = true; tokenInput.defaultValue = ''; tokenInput.value = ''; summary.textContent = control.dataset.messageCancelled; progress.hidden = true; progressText.hidden = true; cancel.hidden = true; };
     fileInput.onchange = function () { if (fileInput.files.length) upload([fileInput.files[0]], false); };
     folderInput.onchange = function () { if (folderInput.files.length) upload(Array.from(folderInput.files), true); };
 
     async function upload(files, folder) {
-      cancelled = false; tokenInput.value = '';
+      cancelled = false; tokenInput.defaultValue = ''; tokenInput.value = '';
       const bytes = files.reduce(function (sum, file) { return sum + file.size; }, 0);
       if (files.length > Number(control.dataset.maxFiles) || bytes > Number(control.dataset.maxBytes)) { summary.textContent = control.dataset.messageLimit; return; }
       const top = folder ? files[0].webkitRelativePath.split('/')[0] : files[0].name;
@@ -76,8 +76,8 @@
           completed += file.size;
         }
         await request('/file-transfer/complete?' + new URLSearchParams({token: session.token, job: jobName(), parameter: control.dataset.parameter}), {method: 'POST', headers: crumbHeaders()}, 1);
-        tokenInput.value = session.token; progress.value = 100; progressText.textContent = '100%'; cancel.hidden = true; summary.textContent = top + ' — ' + control.dataset.messageComplete;
-      } catch (error) { tokenInput.value = ''; progress.hidden = true; progressText.hidden = true; cancel.hidden = true; summary.textContent = control.dataset.messageFailed + ' (' + error.message + ')'; }
+        tokenInput.defaultValue = session.token; tokenInput.value = session.token; progress.value = 100; progressText.textContent = '100%'; cancel.hidden = true; summary.textContent = top + ' — ' + control.dataset.messageComplete;
+      } catch (error) { tokenInput.defaultValue = ''; tokenInput.value = ''; progress.hidden = true; progressText.hidden = true; cancel.hidden = true; summary.textContent = control.dataset.messageFailed + ' (' + error.message + ')'; }
     }
   }
 

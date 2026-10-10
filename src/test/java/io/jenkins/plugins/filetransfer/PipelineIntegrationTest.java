@@ -8,10 +8,18 @@ import static org.junit.Assert.assertTrue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Result;
+import hudson.security.ACL;
 import java.io.ByteArrayInputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.List;
+import jenkins.model.Jenkins;
+import org.htmlunit.HttpMethod;
+import org.htmlunit.WebRequest;
+import org.htmlunit.html.HtmlPage;
+import org.htmlunit.util.NameValuePair;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -88,6 +96,48 @@ public class PipelineIntegrationTest {
         FileOrFolderParameterValue value = new FileOrFolderParameterValue("INPUT", null, false, null, 0, 0, -1, -1);
 
         jenkins.assertBuildStatusSuccess(job.scheduleBuild2(0, new ParametersAction(value)));
+    }
+
+    @Test
+    public void browserBuildFormSubmitsUploadedParameter() throws Exception {
+        configureStore();
+        WorkflowJob job = jenkins.createProject(WorkflowJob.class, "browser-upload");
+        job.addProperty(new ParametersDefinitionProperty(new FileOrFolderParameterDefinition("INPUT")));
+        job.setDefinition(new CpsFlowDefinition(
+                "node { if (!hasUploadedFiles(parameter: 'INPUT')) { error 'missing upload' } }", true));
+        UploadStore.CreatedSession created;
+        try (hudson.security.ACLContext ignored = ACL.as2(Jenkins.ANONYMOUS2)) {
+            created = UploadStore.get().create(job.getFullName(), "INPUT", "input.txt", false, 1, 1, 1024, 10);
+            UploadStore.Token token = UploadStore.Token.parse(created.getToken());
+            UploadStore.get()
+                    .receiveChunk(
+                            token.id, token.secret, "input.txt", 1, 0, 1, true, new ByteArrayInputStream(new byte[] {1
+                            }));
+            UploadStore.get().complete(token.id, token.secret);
+        }
+        JenkinsRule.WebClient webClient = jenkins.createWebClient();
+        webClient.getOptions().setJavaScriptEnabled(false);
+        webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
+        HtmlPage page = webClient.getPage(job, "build?delay=0sec");
+        jenkins.assertXPathValue(page, "//div[@name='parameter']//input[@name='name']/@value", "INPUT");
+        jenkins.assertXPath(page, "//div[@name='parameter']//input[@name='value']");
+        WebRequest request =
+                new WebRequest(new URL(jenkins.getURL(), job.getUrl() + "build?delay=0sec"), HttpMethod.POST);
+        request.setRequestParameters(Arrays.asList(
+                new NameValuePair(
+                        "json", "{\"parameter\":{\"name\":\"INPUT\",\"value\":\"" + created.getToken() + "\"}}"),
+                new NameValuePair("statusCode", "303"),
+                new NameValuePair("redirectTo", ".")));
+        request.setAdditionalHeader("Jenkins-Crumb", "test");
+        webClient.getPage(request);
+        jenkins.waitUntilNoActivity();
+
+        WorkflowRun run = job.getLastBuild();
+        assertNotNull(run);
+        ParametersAction action = run.getAction(ParametersAction.class);
+        assertNotNull(action);
+        assertTrue(action.getParameter("INPUT") instanceof FileOrFolderParameterValue);
+        jenkins.assertBuildStatusSuccess(run);
     }
 
     @Test
